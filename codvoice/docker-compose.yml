@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   nginx:
     build: ./nginx
@@ -40,19 +38,35 @@ services:
       DATABASE_URL: postgresql://codvoice:codvoice123@postgres:5432/codvoice
       REDIS_URL: redis://redis:6379
       TTS_ENGINE_URL: http://codvoice-tts:8000
+      USE_WORKERS: "true"
     depends_on:
       - postgres
       - redis
-      - codvoice-tts
+      - codvoice-worker
     volumes:
       - ./models:/app/models
     networks:
       - codvoice-network
 
+  codvoice-worker:
+    build: ./worker
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+    volumes:
+      - ./models:/app/models
+      - ./src:/app/piper
+    networks:
+      - codvoice-network
+    deploy:
+      replicas: 2
+
   codvoice-tts:
     build: ./tts-engine
     volumes:
       - ./models:/app/models
+      - ./src:/app/piper
     environment:
       CUDA_VISIBLE_DEVICES: "0"
     networks:

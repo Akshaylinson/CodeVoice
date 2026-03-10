@@ -46,6 +46,13 @@ All API requests require an API key in the Authorization header:
 Authorization: Bearer codvoice-default-key-123
 ```
 
+**Admin Access:**
+```
+Authorization: Bearer codvoice-admin-key-456
+```
+
+**Rate Limiting:** 100 requests per minute per API key.
+
 ### Basic TTS Synthesis
 ```bash
 curl -X POST http://localhost/api/tts \
@@ -86,29 +93,44 @@ curl http://localhost/api/voices
 Access the admin dashboard at http://localhost to:
 
 - View usage analytics
-- Test TTS synthesis
+- Test TTS synthesis  
+- Upload voice models
 - Manage voice models
 - Monitor system health
 - View request logs
+
+**Admin Pages:**
+- Dashboard: http://localhost
+- Voice Upload: http://localhost/upload
+- System Logs: http://localhost/logs
+
+**Admin Authentication Required:** Use `codvoice-admin-key-456`
 
 ## Architecture
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│    nginx    │────│ codvoice-api│────│codvoice-tts │
-│   (proxy)   │    │  (FastAPI)  │    │   (Piper)   │
+│    nginx    │────│ codvoice-api│────│Redis Queue  │
+│   (proxy)   │    │  (FastAPI)  │    │             │
 └─────────────┘    └─────────────┘    └─────────────┘
        │                   │                   │
        │            ┌─────────────┐    ┌─────────────┐
-       │────────────│  postgres   │    │    redis    │
-       │            │ (database)  │    │  (cache)    │
+       │────────────│  postgres   │    │codvoice-    │
+       │            │ (database)  │    │worker (x2)  │
        │            └─────────────┘    └─────────────┘
-       │
-┌─────────────┐
-│codvoice-admin│
-│  (Next.js)  │
-└─────────────┘
+       │                                       │
+┌─────────────┐                       ┌─────────────┐
+│codvoice-admin│                       │codvoice-tts │
+│  (Next.js)  │                       │   (Piper)   │
+└─────────────┘                       └─────────────┘
 ```
+
+**New Features:**
+- Redis worker queue for scalable TTS processing
+- Rate limiting (100 requests/minute per API key)
+- Admin authentication for dashboard
+- Startup voice preloading for better performance
+- Horizontal worker scaling
 
 ## Voice Agent Integration
 
@@ -275,15 +297,12 @@ npm run dev
 ## Production Deployment
 
 ### Scaling
-```yaml
-# docker-compose.override.yml
-services:
-  codvoice-api:
-    deploy:
-      replicas: 3
-  codvoice-tts:
-    deploy:
-      replicas: 2
+```bash
+# Scale workers horizontally
+docker-compose up --scale codvoice-worker=5
+
+# Scale API servers
+docker-compose up --scale codvoice-api=3
 ```
 
 ### Security

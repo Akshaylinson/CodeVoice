@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: codvoice
+      POSTGRES_USER: codvoice
+      POSTGRES_PASSWORD: codvoice123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - codvoice-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - codvoice-network
+
+  codvoice-api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://codvoice:codvoice123@postgres:5432/codvoice
+      REDIS_URL: redis://redis:6379
+      USE_WORKERS: "false"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./models:/app/models
+    ports:
+      - "8000:8000"
+    networks:
+      - codvoice-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  codvoice-network:
+    driver: bridge

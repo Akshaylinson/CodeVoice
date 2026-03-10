@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import Link from 'next/link'
 
 export default function Dashboard() {
   const [voices, setVoices] = useState([])
@@ -14,7 +15,11 @@ export default function Dashboard() {
 
   const fetchVoices = async () => {
     try {
-      const response = await axios.get('/api/admin/voices')
+      const response = await axios.get('/api/admin/voices', {
+        headers: {
+          'Authorization': 'Bearer codvoice-admin-key-456'
+        }
+      })
       setVoices(response.data)
       if (response.data.length > 0) {
         setSelectedVoice(response.data[0].name)
@@ -26,7 +31,11 @@ export default function Dashboard() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await axios.get('/api/admin/analytics')
+      const response = await axios.get('/api/admin/analytics', {
+        headers: {
+          'Authorization': 'Bearer codvoice-admin-key-456'
+        }
+      })
       setAnalytics(response.data)
     } catch (error) {
       console.error('Error fetching analytics:', error)
@@ -35,12 +44,12 @@ export default function Dashboard() {
 
   const testTTS = async () => {
     try {
-      const response = await axios.post('/api/tts', {
+      const response = await axios.post('/api/admin/test', {
         text: testText,
         voice: selectedVoice
       }, {
         headers: {
-          'Authorization': 'Bearer codvoice-default-key-123'
+          'Authorization': 'Bearer codvoice-admin-key-456'
         },
         responseType: 'blob'
       })
@@ -56,7 +65,14 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">CODVOICE Dashboard</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">CODVOICE Dashboard</h1>
+          <nav className="flex space-x-4">
+            <Link href="/" className="text-blue-600 hover:text-blue-800">Dashboard</Link>
+            <Link href="/upload" className="text-blue-600 hover:text-blue-800">Upload Voice</Link>
+            <Link href="/logs" className="text-blue-600 hover:text-blue-800">Logs</Link>
+          </nav>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">

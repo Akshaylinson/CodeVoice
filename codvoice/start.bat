@@ -10,6 +10,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
+REM Change to codvoice directory
+cd /d "%~dp0"
+
 REM Build and start all services
 echo Building and starting CODVOICE services...
 docker-compose up -d --build
@@ -23,6 +26,7 @@ echo - Admin Dashboard: http://localhost
 echo - TTS Engine: Internal (codvoice-tts:8000)
 echo.
 echo Default API Key: codvoice-default-key-123
+echo Admin API Key: codvoice-admin-key-456
 echo.
 echo Example API Usage:
 echo curl -X POST http://localhost/api/tts ^

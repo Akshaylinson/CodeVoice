@@ -29,4 +29,5 @@ INSERT INTO voices (name, language, model_path) VALUES
 ('en_US-lessac-medium', 'en_US', '/app/models/en_US-lessac-medium.onnx');
 
 INSERT INTO api_keys (client_name, api_key) VALUES 
-('default', 'codvoice-default-key-123');
+('default', 'codvoice-default-key-123'),
+('admin', 'codvoice-admin-key-456');
