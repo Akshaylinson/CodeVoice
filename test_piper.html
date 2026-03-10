@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Piper TTS Test</title>
+</head>
+<body>
+    <h1>Piper TTS Test</h1>
+    <textarea id="text" placeholder="Enter text to synthesize" rows="4" cols="50">Hello world from Piper TTS!</textarea><br><br>
+    <button onclick="synthesize()">Generate Speech</button><br><br>
+    <audio id="audio" controls style="display:none;"></audio>
+    
+    <script>
+        async function synthesize() {
+            const text = document.getElementById('text').value;
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                if (response.ok) {
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = document.getElementById('audio');
+                    audio.src = audioUrl;
+                    audio.style.display = 'block';
+                    audio.play();
+                } else {
+                    alert('Error: ' + response.statusText);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
