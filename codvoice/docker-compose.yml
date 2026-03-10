@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - codvoice-api
+      - codvoice-admin
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - codvoice-network
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: codvoice
+      POSTGRES_USER: codvoice
+      POSTGRES_PASSWORD: codvoice123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - codvoice-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - codvoice-network
+
+  codvoice-api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://codvoice:codvoice123@postgres:5432/codvoice
+      REDIS_URL: redis://redis:6379
+      TTS_ENGINE_URL: http://codvoice-tts:8000
+    depends_on:
+      - postgres
+      - redis
+      - codvoice-tts
+    volumes:
+      - ./models:/app/models
+    networks:
+      - codvoice-network
+
+  codvoice-tts:
+    build: ./tts-engine
+    volumes:
+      - ./models:/app/models
+    environment:
+      CUDA_VISIBLE_DEVICES: "0"
+    networks:
+      - codvoice-network
+
+  codvoice-admin:
+    build: ./dashboard
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost/api
+    networks:
+      - codvoice-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  codvoice-network:
+    driver: bridge
